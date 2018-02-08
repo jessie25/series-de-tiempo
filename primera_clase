@@ -1,0 +1,84 @@
+# series-de-tiempo
+##para instalar R
+# buscar en google R cran
+# en r studio "installing"
+############################################################
+
+# FUNCIONES BASICAS #
+#R- intro
+
+#directorio de trabajo
+setwd("C:/Users/Sala-D16/Documents/clase")
+getwd()
+
+#CALCULADORA
+3+4
+3^4
+3*4-1+2
+sqrt(10) #raiz cuadrada
+exp(10)  #exp(X)=e^x
+log(10)
+
+log(10,10)
+log(10,base = 10)
+pi
+
+#######################################
+#asignacion
+x=1000
+x+3
+
+e^3
+e=exp(2)
+#operador de asignacion de valores a un objeto "<-"
+y<-3
+n<-34
+un.numerote=1234567890
+un.numeropeque=0.00000001
+
+#vector: operador c, concatena elementos o vectores
+salarios<-c(40000,50000,55000)
+
+##combinando vectores
+salarios3<-c(40000,50000,55000)
+salarios4<-c(10000,15000,20000)
+
+salarios5<-c(salarios3,salarios4)
+
+#vectores con distinto tipo de datos
+alumnos<-c("eliza","bonifacio","edgar")
+alumnos.salario<-c("eliza","bonifacio","edgar",40000,50000,55000)
+
+sum(salarios3)
+length(salarios3)
+sum(salarios3)/length(salarios3)
+mean(salarios3)
+
+# otras funciones: sort(), min(), max(), range(), 
+sort(salarios3)
+help(sort)
+##practicar
+
+## varianza
+x<-c(20,22,24,26,28,30)
+var(x)
+mean(x)
+sd(x)
+
+#########################################################################
+
+##instalacion de paquetes##
+install.packages("Giza")
+#apertura de librerias
+library(Giza)
+install.packages("RODBC")
+library(RODBC)
+
+
+########################################################################
+
+#lectura de datos
+
+#formato csv
+library(readr)
+datos_csv<-read.csv()
