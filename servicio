@@ -1,0 +1,13 @@
+install.packages("tidyverse")
+library(readxl)
+secciones<-data.frame(read.csv("C:/Users/PC/Desktop/servicio/DiputadosMR2015Seccion.csv"))
+names(secciones)
+aguascalientes <- subset(secciones,secciones$NOMBRE_ESTADO=="AGUASCALIENTES",select=c(SECCION,TOTAL_VOTOS,LISTA_NOMINAL))
+
+a<-mean(aguascalientes$TOTAL_VOTOS)
+b<-mean(aguascalientes$LISTA_NOMINAL)
+porcentaje<-(a*100)/b +20
+base<-(porcentaje*b)/100
+class(aguascalientes$TOTAL_VOTOS)
+
+participacion<-subset(aguascalientes,aguascalientes$TOTAL_VOTOS>=base,select=c(SECCION,TOTAL_VOTOS,LISTA_NOMINAL))
