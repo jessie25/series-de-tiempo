@@ -1,0 +1,221 @@
+
+###Se carga el paquete necesario
+install.packages("fpp")
+library(fpp)
+
+###Se estima el modelo de regresion
+library(readr)
+autos_combustible <- read_csv("G:/clases/time-series/topics/data/autos-combustible.csv")
+
+x11()
+plot(jitter(combustible) ~ jitter(ciudad),xlab="Ciudad (kpl)",
+     main="Emision de gases segun el consumo de combustible de diversas marcas de autos",
+     ylab="Huella de emision (toneladas anuales)", data=autos_combustible)
+regresion1 <- lm(combustible ~ ciudad, data=autos_combustible)
+abline(regresion1, col="red")
+
+summary(regresion1)
+
+###Analisis de residuos
+x11()
+residuos_regresion1 <- residuals(regresion1)
+plot(jitter(residuos_regresion1)~jitter(ciudad), ylab="Residuos del modelo de regresion", 
+     xlab="ciudad", data=autos_combustible)
+abline(0,0, col="red")
+
+###Pronosticos mediante regresion
+x11()
+fitted(regresion1)[1]
+pronosticos1 <- forecast(regresion1, newdata=data.frame(ciudad=35))
+plot(pronosticos1, xlab="ciudad (kpl)", ylab="Huellas de emision (toneladas anuales)", 
+     main="Pronosticos del modelo de regresion lineal")
+
+
+##########################################################
+###Modelos no lineales
+x11()
+par(mfrow=c(1,2))
+regresion2 <- lm(log(combustible) ~ log(ciudad), data=autos_combustible)
+plot(jitter(combustible) ~ jitter(ciudad), xlab="ciudad (kpl)",
+     ylab="Huella de emision (toneladas anuales)", data=autos_combustible)
+lines(1:50, exp(regresion2$coef[1]+regresion2$coef[2]*log(1:50)))
+plot(log(jitter(combustible)) ~ log(jitter(ciudad)), 
+     xlab="log ciudad kpl", ylab="log Huella de emision (toneladas anuales)", data=autos_combustible)
+abline(regresion2, col="red")
+
+###Analisis de residuos
+x11()
+residuos2 <- residuals(regresion2)
+plot(jitter(residuos2, amount=.005) ~ jitter(log(ciudad)), 
+     ylab="Residuos", xlab="log(ciudad)", data=autos_combustible)
+abline(0,0, col="red")
+
+###Regresion para series de tiempo
+library(readr)
+consumo_ingreso <- read_csv("G:/clases/time-series/topics/data/consumo-ingreso.csv")
+
+#Ajuste del modelo
+x11()
+consumo <-ts(consumo_ingreso[,1])
+ingreso <-ts(consumo_ingreso[,2])
+regresion3 <- tslm(consumo ~ ingreso)
+plot(consumo_ingreso, ylab="Cambio porcentual en el comsumo e ingreso",
+     plot.type="single", col=1:2, xlab="Year")
+legend("topright", legend=c("Consumo","Ingreso"), 
+       lty=1, col=c(1,2), cex=.9)
+plot(consumo ~ ingreso, data=consumo_ingreso, 
+     ylab="Cambio porcentual en el comsuno", xlab="Cambio porcentual en el ingreso",
+     main="Regresion del consmuo por el ingreso")
+abline(regresion3, col="red")
+summary(regresion3)
+
+
+###Correlacion de los residuos
+x11()
+par(mfrow=c(2,2))
+residuos3 <- ts(resid(regresion3), start =1970.25, frequency=4)
+plot.ts(residuos3, ylab="residuos (Consumo)", xlab="Tiempo", col="navy")
+abline(0,0, col="red")
+Acf(residuos3, xlab="Retardo")
+residuos4 <- resid(regresion3)
+plot(residuos4, ylab="residuos (Ingreso)", xlab="Tiempo", col="navy")
+abline(0,0, col="red")
+acf(residuos4, xlab="Retardo")
+
+
+##############################################################################
+###Regresion con predictores
+
+library(readxl)
+multiple <- read_excel("F:/data/multiple2.xlsx")
+
+multiple1 <- step(lm(resultado ~ ahorros + ingresos + tiempo1 +
+                       tiempo2 + indicador, data=multiple))
+summary(multiple1)
+
+###Ajuste del modelo segun la dispersion de los valores predichos
+windows()
+plot(fitted(multiple1), multiple$resultado,
+     ylab="Resultado", xlab="Resultado predicho")
+abline(multiple1, col="red")
+
+###Seleccion de predictores
+#Estadisticos AIC y BIC
+
+#Desarrollamos el modelo 1 con todos los posibles predictores:
+
+multiple5 <- lm(resultado ~ ahorros + ingresos + tiempo1 +
+                       tiempo2 + indicador, data=multiple)
+summary(multiple5)
+AIC(multiple5); BIC(multiple5)
+
+#
+multiple4 <- lm(resultado ~ ahorros + ingresos + tiempo1 +
+                  tiempo2, data=multiple)
+summary(multiple4)
+AIC(multiple4); BIC(multiple4)
+
+#
+multiple3 <- lm(resultado ~ ahorros + ingresos + tiempo1, data=multiple)
+summary(multiple3)
+AIC(multiple3); BIC(multiple3)
+
+#
+multiple2 <- lm(resultado ~ ahorros + ingresos, data=multiple)
+summary(multiple2)
+AIC(multiple2); BIC(multiple2)
+
+#
+multiple1 <- lm(resultado ~ ahorros, data=multiple)
+summary(multiple1)
+AIC(multiple1); BIC(multiple1)
+
+#
+multiple0 <- lm(resultado ~ resultado, data=multiple)
+summary(multiple0)
+AIC(multiple0); BIC(multiple0)
+
+
+#Analisis de residuos
+x11()
+residuos_multiple <- lm(resultado ~ ahorros + ingresos +
+            tiempo1 + tiempo2, data=multiple)
+par(mfrow=c(2,2))
+plot(multiple$ahorros, residuals(residuos_multiple),xlab="ahorros")
+abline(0,0, col="red")
+plot(multiple$ingresos, residuals(residuos_multiple),xlab="ingresos")
+abline(0,0, col="red")
+plot(multiple$tiempo1, residuals(residuos_multiple),xlab="tiempo1")
+abline(0,0, col="red")
+plot(multiple$tiempo2, residuals(residuos_multiple),xlab="tiempo2")
+abline(0,0, col="red")
+
+#Un diagrama de dispersion de los residuos contra cada predictor en el modelo es un medio de analisis
+#del modelo. 
+#Si estos diagramas de dispersión muestran un patrón, entonces la relación puede ser no lineal y el 
+#modelo deberá modificarse 
+#Adicionalmente, pueden graficarse los residuos contra cualquier predictor que no este en el modelo. 
+#Si estos muestran un patrón, puede ser necesario agregar el predictor al modelo (puede ser no lineal).
+
+
+###OTRA FORMA
+###Diagrama de dispersion de residuos versus valores pronosticados
+plot(fitted(multiple1), residuals(residuos_multiple),
+     xlab="Resultados Predichos", ylab="Residuos")
+
+#Un gráfico de los residuos frente a los valores ajustados no deberia mostrar ningún patron. 
+#Si se observa un patrón, puede haber heteroscedasticidad en los errores. 
+#Es decir, la varianza de los residuos puede no ser constante. 
+#Para superar este problema, puede ser necesaria una transformación de la variable a pronosticar.
+
+
+###Autocorrelacion de los residuos
+resultado.ts <- ts(multiple$resultado); ahorros.ts <- ts(multiple$ahorros); ingresos.ts<-(multiple$ingresos)
+tiempo1.ts <- ts(multiple$tiempo1); tiempo2.ts <- ts(multiple$tiempo2)
+
+estimado.ts <- tslm(resultado.ts ~ ahorros.ts + ingresos.ts + tiempo1.ts + tiempo2.ts)
+residuos_estimado.ts <- residuals(estimado.ts)
+par(mfrow=c(1,2))
+plot(residuos_estimado.ts, ylab="Residuos", xlab="periodo")
+abline(0,0, col="red")
+Acf(residuos_estimado.ts, main="Funciones de autocorrelacion de los residuos", xlab="Retardo")
+
+#Cuando los datos son series temporales, un gráfico de las FAC de los residuos ayuda a determinar si existe alguna 
+#autocorrelacion en los residuos (no describiste la componente sistamatica del proceso).
+
+
+#####################################################################################################################
+###Estadistico Durbin-Watson
+install.packages("lmtest")
+require(lmtest)
+dwtest(residuos_estimado.ts, alt="two.sided")
+
+#Otra prueba de autocorrelacion es el estadistico Durbin-Watson.
+#Se usa para probar la hipotesis de que no hay autocorrelación 
+#en los retrasos de los residuos. Si no hay autocorrelacion, 
+#la distribucion de Durbin-Watson es simetrica alrededor de 2. 
+#Un pequeño valor p indica que queda una autocorrelacion significativa en los residuos.
+
+###
+bgtest(residuos_estimado.ts,5)
+
+
+###Normalidad de los residuos
+x11()
+hist(residuos_estimado.ts, breaks="FD", xlab="Residuos", main="Histograma de los residuos", ylim=c(0,22))
+x <- -50:50
+lines(x, 560*dnorm(x,0, sd(residuos_estimado.ts)),col=2)
+
+#los residuos, si son ruido blanco se deben de distribuir normal
+#estadistico de sesgo para ver si es simetrica 
+
+
+####para calcular el sesgo y kurtosis
+
+install.packages("moments")
+library("moments")
+skewness(residuos_estimado.ts,na.rm = FALSE)
+kurtosis(residuos_estimado.ts,na.rm = FALSE)
+
+##cuatro vectores de datos
+#uno yt y otro predictores
