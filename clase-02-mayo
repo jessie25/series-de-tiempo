@@ -1,0 +1,30 @@
+Promedios móviles simples: no tendencia y no estacionalidad
+funcionan bien con pronosticos sin patrones 
+
+adecuacion a esos promedios moviles: PROMEDIOS MOVILES PONDERADOS
+dan mas peso a las observaciones mas recientes 
+--->>la unica restriccion es que la suma es igual a 1 (de los ponderados)
+--->> y se distribuyen en forma ascendente
+---->> debe dar mayor ponderacion a lo mas reciente
+deben de ser PMP2 Y POR MUCHO PM4
+
+NOTA: LA DESVENTAJA ES QUE NO MODELAN LA ESTACIONALIDAD O TENDENCIA
+NO SON METODOS ADECUADOS PARA MODELOS QUE PRESENTAN ESAS CARACTERISTICAS
+
+
+SUAVECIMIENTO EXPONENCIAL SES
+suavizado exponencial simple
+->suavizado exponencial (unico/alisamiento)
+--->> los ponderados decrecen exponencialmente
+--->> hay uno o mas parametros de suavizado que deben de determinarse o esstimarse y estas elecciones determinan los pesos asignados
+a las observaciones 
+
+>>< se complejiza con metodos de suavizado doble y de suavizado triple 
+
+NAIVE
+<<< todo el peso cae en la ultima, debido a la irregularidad
+metodo ingenuo
+
+en el promedio
+<<<< se obtiene el promedio de todo y se da constante posteriormente
+
