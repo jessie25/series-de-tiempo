@@ -1,0 +1,158 @@
+
+###############################
+library(fpp)
+library(readxl)
+
+#Se grafican los datos del proceso
+datos_ejercicio <- read_excel("C:/Users/Sala-D10/Desktop/series de tiempo-JessicaNS/ar_ma_grafico.xlsx")
+
+datos_ejercicio.ts <- ts(datos_ejercicio)
+
+windows();plot(datos_ejercicio.ts)
+#La informacion es bastante volatil
+
+
+#El desarrollo de un modelo ARIMA requiere que la serie sea estacionaria. 
+#Se dice que una serie es estacionaria cuando su media, varianza y autocovarianza son invariantes en el tiempo. 
+#Esta suposicion tiene un sentido intuitivo: dado que ARIMA usa retardos previos de series para modelar su comportamiento, 
+#el modelado de series estables con propiedades consistentes implica menos incertidumbre. 
+#La prueba aumentada Dickey-Fuller (ADF) es una prueba estadistica formal de estacionariedad. 
+#La hipotesis nula supone que la serie no es estacionaria. El procedimiento FAC prueba si el cambio en Y 
+#puede explicarse por un valor rezagado y una tendencia lineal. Si la contribución del valor rezagado al cambio en Y 
+#no es significativa y existe una presencia de un componente de tendencia, 
+#la serie no es estacionaria y la hipotesis nula no sera rechazada.
+
+
+##tendencia .... no es estacionaria
+adf.test(datos_ejercicio.ts, alternative = "stationary")
+#no es estacionario
+
+
+#Por lo general, las series no estacionarias se pueden corregir mediante una transformación simple como la diferenciacion. 
+#Diferenciar las series puede ayudar a eliminar su tendencia o ciclos. La idea detras de la diferenciacion 
+#es que, si la serie de datos original no tiene propiedades constantes en el tiempo, entonces el cambio de un periodo
+#a otro podria hacerlo.
+
+#diferencia entre yt-1 y yt
+
+#########
+#Autocorrelaciones y elección de orden de modelos
+
+#Los diagramas de autocorrelacion (tambien conocidos como ACF o la funcion de autocorrelación) 
+#son una herramienta visual util para determinar si una serie es estacionaria. 
+#Estos garficosayudar a elegir los parametros de orden para el modelo ARIMA. 
+#Si la serie esta correlacionada con sus rezagos, entonces, en general, hay algunos componentes 
+#de tendencia o estacionales y, por lo tanto, sus propiedades estadisticas no son constantes a lo largo del tiempo.
+
+#Los graficos de FAC muestran la correlacion entre una serie y sus retrasos.
+#--->>>Ademas de sugerir el orden de diferenciacion, 
+###########los graficos FAC pueden ayudar a determinar el orden del modelo MA(q). 
+###########Los graficos de autocorrelacion parcial (FACP), como su nombre indica, muestran la correlación entre una variable 
+#y sus rezagos que no se explica por los rezagos anteriores. 
+#Los graficos FACP son utiles para determinar el orden del modelo AR(p).
+
+
+#medias moviles FAC
+#autorregresivo FACP
+
+#Existen autocorrelaciones significativas con muchos rezagos en nuestra serie, como se muestra en el siguiente grafico de FAC 
+#Sin embargo, esto podría deberse a una correlacion de transferencia del primer retardo o de los primeros, 
+#ya que el grafico FACP solo muestra un pico en los rezagos 1 y 6:
+x11();acf(datos_ejercicio.ts, main="")
+
+x11();pacf(datos_ejercicio.ts, main="")
+#el primero es altisimo----es por que este proceso tiene tendencia estadisticamente significativa
+#
+
+#Podemos comenzar con el orden de d= 1 y volver a evaluar si se necesita una mayor diferenciacion.
+#arrancamos con a
+
+
+#La prueba aumentada de Dickey-Fuller en datos diferenciados rechaza las hipotesis nulas de no estacionariedad. 
+conteo_d1 <- diff(datos_ejercicio.ts, differences = 1)
+plot(conteo_d1)
+#se asemeja a ruido blanco
+
+adf.test(conteo_d1, alternative = "stationary")
+#Al trazar la serie diferenciada, vemos un patron oscilante alrededor de 0 sin una tendencia fuerte visible. 
+#Esto sugiere que la diferenciacion de los terminos del orden 1 es suficiente y debe incluirse en el modelo.
+#A continuación, los picos en rezagos particulares de la serie diferenciada pueden ayudar a informar la elección de p o q para nuestro modelo:
+
+#no existe correlacion serial, por ende 
+#basado en la significancia estadistica de la prueba ya es estacional
+
+
+x11();acf(conteo_d1, main="FAC para serie diferenciada")
+x11();pacf(conteo_d1, main="FAC para serie diferenciada")
+#corelaciones significativas en el desfase 1 y 2
+
+
+pacf(conteo_d1, main="FACP para serie diferenciada")
+
+#Hay correlaciones automaticas significativas en el desfase 1 y 2 y mas alla. 
+#Los graficos de correlacion parcial muestran un pico significativo en los retardos 1 y 6. 
+#Esto sugiere que podríamos querer probar modelos con componentes AR o MA de orden 1, 2 o 6. 
+#Un pico en el desfase 6 podria sugerir que hay un patron estacional presente, 
+
+
+Arima(datos_ejercicio.ts, order=c(0,1,5))
+
+
+###########################
+#Estiamndo un modelo ARIMA
+
+#Podemos especificar la estructura ARIMA no estacional y ajustar el modelo para desestacionalizar los datos. Los parámetros (1,1,1) sugeridos por el procedimiento automatizado están en línea con nuestras expectativas basadas en los pasos anteriores; el modelo incorpora diferenciación de grado 1 y utiliza un término autorregresivo de primer retardo y un modelo de promedio móvil de orden 1:
+
+auto.arima(datos_ejercicio.ts, seasonal=FALSE)
+#no tiene tendencia, la eliminamos, por eso no arroja un valor constante
+
+#Escribir la ecuacion del modelo obtenido:
+#Zt=0.0423 - 0.0192 
+
+
+####Evaluar e iterar
+
+#Entonces, ahora hemos ajustado un modelo que puede producir un pronostico, pero ¿tiene sentido? 
+#¿Podemos confiar en este modelo? Podemos comenzar examinando los graficos ACF y PACF para los residuos del modelo. 
+#Si los parametros de orden del modelo y la estructura se especifican correctamente, 
+#no esperariamos que hubiera autocorrelaciones significativas.
+
+arima_estimado <-auto.arima(datos_ejercicio.ts, seasonal=FALSE)
+x11();tsdisplay(residuals(arima_estimado), lag.max=45, main="(1,1,1)")
+###buscamos que los residuos no esten corrrelacionados
+##aqui no estimamos (1,1,2) (1,1,5)
+##
+
+#Podemos repetir el proceso de ajuste que permite el componente MA(6) y examinar los diagramas de diagnostico nuevamente. 
+#Esta vez, no hay autocorrelaciones significativas presentes. Si el modelo no se especifica correctamente, 
+#eso generalmente se reflejara en residuos en forma de tendencias, o cualquier otro patron no capturado por el modelo. 
+#Idealmente, los residuos deberian verse como ruido blanco, lo que significa que  se distribuyen normalmente. 
+#Se puede usar una funcion de conveniencia tsdisplay () para trazar estos diagnosticos del modelo. 
+#Los diagramas de residuales muestran un rango de error más pequeño, mas o menos centrado alrededor de 0. Podemos observar que AIC es más pequeño para la estructura (1, 1, 7) también:
+
+arima_estimado2 = arima(datos_ejercicio.ts, order=c(1,1,6))
+
+arima_estimado2
+
+tsdisplay(residuals(arima_estimado2), lag.max=15, main="Residuos de ARIMA estacional estimado")
+##principios de los AIC Y BIC
+#esta eliminando la correlacion serial de los residuos
+###
+
+################
+#Los pronosticos de un modelo ajustado deben especificar el horizonte de pronostico 
+#h periodos por delante  y usar el modelo ajustado para generar los pronosticos:
+pronosticos_arima_estimado2 <- forecast(arima_estimado2, h=30)
+x11();plot(pronosticos_arima_estimado2)
+#La linea azul clara de arriba muestra el ajuste proporcionado por el modelo, 
+#pero ¿que pasaria si quisieramos tener una idea de como funcionara el modelo en el futuro? 
+#Un metodo es reservar una parte de nuestros datos como un conjunto de "validacion",
+#ajustar el modelo y luego comparar el pronostico con los valores reales observados:
+modelo_basico <- window(ts(datos_ejercicio.ts), start=700)
+
+modelo_valida2 <- arima(ts(datos_ejercicio.ts[c(700:731)]), order=c(1,1,6))
+
+modelo_valida3 <- forecast(modelo_valida2, h=30)
+x11();plot(modelo_valida3, main=" ")
+lines(ts(datos_ejercicio.ts))
+
